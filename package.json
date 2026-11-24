@@ -1,0 +1,12 @@
+{
+  "name": "krathong-live",
+  "version": "4.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "start:supabase": "node --env-file=.env server.js"
+  }
+}

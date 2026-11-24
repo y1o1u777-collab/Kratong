@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#05080f">
+  <meta name="description" content="ลอยกระทงออนไลน์ 3D จุดเทียนบนกระทงของตัวเอง ฝากคำอธิษฐานไว้กับสายน้ำ หรือจับคู่ลอยกระทงไปพร้อมกันแบบเรียลไทม์">
+  <title>Krathong Live · คืนลอยกระทง</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+  <script defer src="match.js"></script>
+  <script defer src="app.js"></script>
+  <script defer src="vendor/gsap.min.js"></script>
+  <script defer src="vendor/ScrollTrigger.min.js"></script>
+  <script defer src="motion.js"></script>
+  <script type="module" src="krathong3d.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Krathong Live หน้าหลัก">
+      <span class="brand-mark" aria-hidden="true">✺</span><span class="brand-type">KRATHONG<span class="brand-dot">.</span></span>
+    </a>
+    <nav class="nav-links" aria-label="เมนูหลัก">
+      <button class="nav-link is-active" data-view="home">หน้าหลัก</button>
+      <button class="nav-link" data-view="gallery">ริมสายน้ำ</button>
+      <button class="nav-link" data-view="match">จับคู่</button>
+    </nav>
+    <div class="topbar-right">
+      <span class="connection-pill" id="connection-status"><i></i><span>เชื่อมต่อ…</span></span>
+      <button class="icon-button" id="motion-toggle" type="button" aria-label="เปิดหรือปิดเอฟเฟกต์เคลื่อนไหว" aria-pressed="false" title="ลดการเคลื่อนไหว">◌</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="view is-visible" id="home-view" aria-labelledby="hero-title">
+      <div class="hero-stage">
+        <div class="hero-fallback" aria-hidden="true"></div>
+        <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
+        <div class="hero-vignette" aria-hidden="true"></div>
+        <div class="hero-grain" aria-hidden="true"></div>
+
+        <div class="hero-content">
+          <div class="eyebrow"><span class="eyebrow-line"></span><span>คืนลอยกระทง · LOY KRATHONG</span></div>
+          <h1 id="hero-title" tabindex="-1">คืนนี้ให้สายน้ำ<br><em>พาคำอธิษฐานไป</em></h1>
+          <p>จุดเทียนบนกระทงของคุณ ปล่อยให้แสงค่อย ๆ ลอยไปตามสายน้ำ แล้วฝากความตั้งใจไว้กับคืนพระจันทร์ — หรือจะหาคนที่ชอบอะไรเหมือนกันมาลอยกระทงเป็นเพื่อนก็ได้</p>
+          <div class="hero-actions">
+            <button class="primary-button" id="start-create" type="button"><span>สร้างกระทงของฉัน</span><b aria-hidden="true">↗</b></button>
+            <button class="outline-button" data-view="match" type="button">สุ่มเพื่อนลอยกระทง <span aria-hidden="true">↓</span></button>
+          </div>
+        </div>
+
+        <div class="hero-legend"><span class="live-dot" aria-hidden="true"></span> แตะผิวน้ำให้เกิดระลอก</div>
+        <button class="water-action" type="button" aria-label="สร้างระลอกคลื่นบนผิวน้ำ" title="สร้างระลอกคลื่น">≋</button>
+        <div class="hero-scroll-cue" aria-hidden="true"><span></span>เลื่อนลง</div>
+      </div>
+
+      <section class="match-section" id="match-section" aria-labelledby="match-title">
+        <div class="match-copy reveal">
+          <div class="eyebrow"><span class="eyebrow-line"></span> ลอยกระทงด้วยกัน</div>
+          <h2 id="match-title" tabindex="-1">คนละกระทง<br><em>สายน้ำเดียวกัน</em></h2>
+          <p>เลือกความชอบของคุณ แล้วให้สายน้ำพาไปพบคนที่ชอบอะไรคล้ายกัน คุยกันสักนิดก่อนกดพร้อมลอยกระทงคู่</p>
+          <p class="privacy-note">ชื่อเล่นและโปรไฟล์จะแสดงให้คู่ของคุณเห็นระหว่างการจับคู่</p>
+        </div>
+        <div class="match-card reveal" id="match-card" data-status="connecting">
+          <div class="match-scene" aria-hidden="true">
+            <div class="pair-fallback">
+              <div class="pair-moon"></div>
+              <div class="pair-water"></div>
+              <div class="pair-boat pair-boat--one"><span></span><i></i></div>
+              <div class="pair-boat pair-boat--two"><span></span><i></i></div>
+            </div>
+            <canvas class="pair-canvas" id="pair-canvas" aria-hidden="true"></canvas>
+          </div>
+          <div class="match-panel">
+            <div class="match-status"><span class="live-dot" aria-hidden="true"></span> <span id="match-indicator">กำลังเชื่อมต่อ</span></div>
+            <div aria-live="polite" aria-atomic="true">
+              <h3 id="match-state">กำลังเชื่อมต่อระบบจับคู่</h3>
+              <p id="match-description">เมื่อพร้อมแล้ว คุณจะเริ่มสุ่มเพื่อนได้ที่นี่</p>
+            </div>
+            <form class="match-profile" id="match-profile" hidden>
+              <div class="profile-fields">
+                <label for="match-name">ชื่อเล่น <input id="match-name" name="nickname" maxlength="24" required placeholder="ชื่อที่จะให้คู่ของคุณเห็น" autocomplete="off"></label>
+                <label for="match-gender">เพศ <select id="match-gender" name="gender">
+                  <option value="private">ไม่ระบุ</option><option value="woman">หญิง</option><option value="man">ชาย</option><option value="nonbinary">นอนไบนารี</option><option value="other">อื่น ๆ</option>
+                </select></label>
+              </div>
+              <div class="profile-fields profile-extras">
+                <label for="match-ig">Instagram <small>ไม่บังคับ</small><input id="match-ig" name="instagram" maxlength="31" placeholder="@ชื่อผู้ใช้" autocomplete="off"></label>
+                <div class="photo-field">
+                  <span>รูปโปรไฟล์ <small>ไม่บังคับ</small></span>
+                  <label for="match-photo" class="photo-picker"><img id="photo-preview" alt="" hidden><span id="photo-label">＋ เลือกรูป</span></label>
+                  <input class="sr-only" id="match-photo" type="file" accept="image/png,image/jpeg,image/webp,image/avif">
+                  <button class="text-button" id="photo-remove" type="button" hidden>ลบรูป</button>
+                </div>
+              </div>
+              <fieldset class="interest-options">
+                <legend>ความชอบ <small>เลือกอย่างน้อย 1 ข้อ</small></legend>
+                <label><input type="checkbox" name="interests" value="music"><span>♫ เพลง</span></label>
+                <label><input type="checkbox" name="interests" value="games"><span>◈ เกม</span></label>
+                <label><input type="checkbox" name="interests" value="art"><span>✿ ศิลปะ</span></label>
+                <label><input type="checkbox" name="interests" value="sports"><span>✦ กีฬา</span></label>
+                <label><input type="checkbox" name="interests" value="movies"><span>▸ หนังและซีรีส์</span></label>
+                <label><input type="checkbox" name="interests" value="tech"><span>⌘ เทคโนโลยี</span></label>
+                <label><input type="checkbox" name="interests" value="food"><span>♡ อาหาร</span></label>
+                <label><input type="checkbox" name="interests" value="travel"><span>⌁ ท่องเที่ยว</span></label>
+              </fieldset>
+            </form>
+            <div class="match-actions">
+              <button class="primary-button" id="match-action" type="submit" form="match-profile" disabled>สุ่มเพื่อนลอยกระทง <span aria-hidden="true">↗</span></button>
+              <button class="text-button" id="match-leave" type="button" hidden>ยกเลิก</button>
+            </div>
+            <p class="match-error" id="match-error" role="alert" hidden></p>
+            <section id="match-chat" class="match-chat" aria-labelledby="chat-title" hidden>
+              <header class="chat-header"><div class="chat-avatar" aria-hidden="true"><img id="chat-avatar" alt="" hidden><span>✿</span></div><div><h4 id="chat-title"></h4><p id="chat-interests"></p><a id="chat-ig" target="_blank" rel="noopener noreferrer" hidden></a></div></header>
+              <div class="chat-log" id="chat-log" role="log" aria-label="ข้อความแชท"><p class="chat-empty">ส่งข้อความทักทายกันได้เลย ✦</p></div>
+              <form class="chat-form" id="chat-form">
+                <label class="sr-only" for="chat-message">ข้อความแชท</label>
+                <input id="chat-message" name="message" maxlength="300" required autocomplete="off" placeholder="พิมพ์ข้อความ…">
+                <button class="outline-button" type="submit">ส่ง <span aria-hidden="true">↗</span></button>
+              </form>
+              <p class="chat-note">ประวัติแชทจะหายเมื่อจบการจับคู่ ใช้ชื่อเล่นและเลี่ยงการแชร์ข้อมูลติดต่อ</p>
+            </section>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="view gallery-view" id="gallery-view" aria-labelledby="gallery-title" hidden>
+      <div class="section-heading reveal">
+        <div><div class="eyebrow"><span class="eyebrow-line"></span> THE RIVER OF WISHES</div><h2 id="gallery-title" tabindex="-1">กระทงของ<span>ทุกคน</span></h2><p>ทุกแสงมีเรื่องราว ทุกคำอธิษฐานมีความหมาย</p></div>
+        <button class="primary-button primary-button--small" id="gallery-create" type="button"><span>＋ สร้างกระทง</span></button>
+      </div>
+      <div class="gallery-river" id="gallery-river">
+        <div class="gallery-fallback" aria-hidden="true"></div>
+        <canvas class="gallery-canvas" id="gallery-canvas" aria-hidden="true"></canvas>
+        <div class="gallery-empty" id="gallery-empty"><span class="empty-lotus">✿</span><strong>แม่น้ำยังรอแสงแรกจากคุณ</strong><p>มาเป็นคนแรกที่ส่งกระทงออกเดินทางกันเถอะ</p><button class="outline-button" id="empty-create" type="button">สร้างกระทงใบแรก</button></div>
+        <div class="floating-collection" id="floating-collection" aria-live="polite"></div>
+        <div class="river-label">แตะกระทงเพื่ออ่านคำอธิษฐาน</div>
+        <button class="water-action" type="button" aria-label="สร้างระลอกคลื่นบนผิวน้ำ" title="สร้างระลอกคลื่น">≋</button>
+      </div>
+      <div class="gallery-bottom reveal"><span><i class="tiny-star">✦</i> กระทงที่ถูกส่งออกเดินทาง</span><strong id="gallery-count">0 <small>กระทง</small></strong></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a class="brand" href="#home"><span class="brand-mark" aria-hidden="true">✺</span><span class="brand-type">KRATHONG<span class="brand-dot">.</span></span></a>
+    <span class="school-credit">โรงเรียนเตรียมอุดมศึกษาพัฒนาการ ปทุมธานี</span>
+    <a class="footer-top" href="#home">กลับด้านบน <span aria-hidden="true">↑</span></a>
+  </footer>
+
+  <div class="modal-backdrop" id="create-modal" hidden>
+    <section class="dialog create-dialog" role="dialog" aria-modal="true" aria-labelledby="create-title">
+      <button class="dialog-close" data-close="create-modal" type="button" aria-label="ปิด">×</button>
+      <h2 id="create-title">สร้างกระทง<span>ของคุณ</span></h2><p class="dialog-intro">เลือกแบบกระทง แล้วฝากความตั้งใจไว้กับสายน้ำ</p>
+      <form id="krathong-form">
+        <label class="field-label" for="wish-name">ชื่อที่อยากให้แสดง <span>ไม่บังคับ</span></label>
+        <input id="wish-name" name="name" maxlength="30" autocomplete="off" placeholder="ใช้ชื่อเล่นได้" />
+        <label class="field-label" for="wish-text">คำอธิษฐาน <span id="wish-counter">0/180</span></label>
+        <textarea id="wish-text" name="wish" rows="3" maxlength="180" required placeholder="ขอให้ปีนี้เป็นปีที่ดี..." ></textarea>
+        <div class="field-label design-label">เลือกกระทงของคุณ</div>
+        <div class="design-preview" id="create-preview" aria-hidden="true"></div>
+        <div class="design-options">
+          <label class="design-option is-selected"><input type="radio" name="design" value="gold" checked><span class="mini-krathong mini-krathong--gold"><i>✿</i></span><strong>แสงทอง</strong><small>อบอุ่นและเปล่งประกาย</small></label>
+          <label class="design-option"><input type="radio" name="design" value="lotus"><span class="mini-krathong mini-krathong--lotus"><i>✿</i></span><strong>บัวชมพู</strong><small>อ่อนโยนและสดใส</small></label>
+        </div>
+        <label class="share-control" id="share-control" hidden><input type="checkbox" id="wish-share"> <span>เผยแพร่ชื่อที่แสดงและคำอธิษฐานบนแม่น้ำสาธารณะ</span></label>
+        <button class="primary-button submit-button" id="launch-button" type="submit"><span>จุดแสงและปล่อยกระทง</span><b>↗</b></button>
+        <p class="form-note">กระทงจะถูกบันทึกในเบราว์เซอร์นี้</p>
+      </form>
+    </section>
+  </div>
+
+  <div class="launch-overlay" id="launch-overlay" role="dialog" aria-modal="true" aria-labelledby="launch-title" hidden>
+    <div class="launch-bg" aria-hidden="true"></div>
+    <canvas class="launch-canvas" id="launch-canvas" aria-hidden="true"></canvas>
+    <div class="launch-grain" aria-hidden="true"></div>
+    <div class="launch-ui">
+      <div class="launch-message">
+        <span class="launch-spark" aria-hidden="true">✦</span>
+        <p>ขอให้คำอธิษฐานของคุณ</p>
+        <h2 id="launch-title">เดินทางไปถึงแสงดาว</h2>
+      </div>
+      <div class="launch-raft" id="launch-raft" aria-hidden="true">
+        <div class="mini-raft-leaves"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="launch-flame"></span><span class="launch-raft-flower">✿</span>
+      </div>
+      <button class="launch-finish" id="launch-finish" type="button">กลับสู่แม่น้ำ <span>→</span></button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="detail-modal" hidden>
+    <section class="dialog detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <button class="dialog-close" data-close="detail-modal" type="button" aria-label="ปิด">×</button>
+      <div class="detail-visual" id="detail-visual"><span class="detail-lantern">✿</span></div>
+      <h2 id="detail-title">คำอธิษฐาน</h2><p class="detail-wish" id="detail-wish"></p><div class="detail-meta"><span id="detail-author"></span><span id="detail-date"></span></div>
+    </section>
+  </div>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
